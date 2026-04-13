@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import './WebcamDetector.css';
 
 const WebcamDetector = ({ model, setDetections }) => {
@@ -39,13 +39,15 @@ const WebcamDetector = ({ model, setDetections }) => {
     startWebcam();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const video = videoRef.current;
+      if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
 
-  const detectObjects = async () => {
+  const detectObjects = useCallback(async () => {
     if (!model || !videoRef.current || !canvasRef.current) return;
 
     const predictions = await model.detect(videoRef.current);
@@ -54,7 +56,6 @@ const WebcamDetector = ({ model, setDetections }) => {
 
     // Draw bounding boxes
     const ctx = canvasRef.current.getContext('2d');
-    const video = videoRef.current;
 
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
@@ -82,7 +83,7 @@ const WebcamDetector = ({ model, setDetections }) => {
     if (isRunning) {
       animationIdRef.current = requestAnimationFrame(detectObjects);
     }
-  };
+  }, [model, isRunning, setDetections]);
 
   useEffect(() => {
     if (isRunning && model) {
@@ -93,7 +94,7 @@ const WebcamDetector = ({ model, setDetections }) => {
         cancelAnimationFrame(animationIdRef.current);
       }
     };
-  }, [isRunning, model]);
+  }, [isRunning, model, detectObjects]);
 
   const toggleDetection = () => {
     setIsRunning(!isRunning);

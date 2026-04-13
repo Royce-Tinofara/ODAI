@@ -32,3 +32,6 @@ yarn-error.log*
 # Uploads
 /uploads
 *.log
+
+# Local Netlify folder
+.netlify

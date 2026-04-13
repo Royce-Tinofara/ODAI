@@ -1,7 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import * as tf from '@tensorflow/tfjs';
+import React, { useState, useEffect } from 'react';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import axios from 'axios';
 import WebcamDetector from './components/WebcamDetector';
 import ImageUploader from './components/ImageUploader';
 import DetectionHistory from './components/DetectionHistory';
@@ -9,7 +7,7 @@ import './App.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('webcam');
-  const [detections, setDetections] = useState([]);
+  const [setDetections] = useState([]);
   const [model, setModel] = useState(null);
   const [loading, setLoading] = useState(true);
 
