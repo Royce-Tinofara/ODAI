@@ -8,12 +8,30 @@ const [isRunning, setIsRunning] = useState(false);
   const [detectionData, setDetectionData] = useState([]);
   const [fps, setFps] = useState(0);
   const [inferenceTime, setInferenceTime] = useState(0);
+  // eslint-disable-next-line no-unused-vars
   const [facingMode, setFacingMode] = useState('environment');
   const animationIdRef = useRef(null);
   const lastDetectionTime = useRef(0);
   const frameInterval = 1000 / 10; // 10 FPS for better performance
   const frameCountRef = useRef(0);
   const fpsStartTimeRef = useRef(Date.now());
+
+  // Calculate Intersection over Union (IoU) for two bounding boxes
+  const calculateIoU = useCallback((box1, box2) => {
+    const [x1, y1, w1, h1] = box1;
+    const [x2, y2, w2, h2] = box2;
+
+    const box1Area = w1 * h1;
+    const box2Area = w2 * h2;
+
+    const intersectionX = Math.max(0, Math.min(x1 + w1, x2 + w2) - Math.max(x1, x2));
+    const intersectionY = Math.max(0, Math.min(y1 + h1, y2 + h2) - Math.max(y1, y2));
+    const intersectionArea = intersectionX * intersectionY;
+
+    const unionArea = box1Area + box2Area - intersectionArea;
+
+    return unionArea === 0 ? 0 : intersectionArea / unionArea;
+  }, []);
 
   // Non-maximum suppression to reduce overlapping detections
   const nonMaxSuppression = useCallback((predictions, iouThreshold = 0.5) => {
@@ -37,24 +55,7 @@ const [isRunning, setIsRunning] = useState(false);
     }
 
     return selected;
-  };
-
-  // Calculate Intersection over Union (IoU) for two bounding boxes
-  const calculateIoU = useCallback((box1, box2) => {
-    const [x1, y1, w1, h1] = box1;
-    const [x2, y2, w2, h2] = box2;
-
-    const box1Area = w1 * h1;
-    const box2Area = w2 * h2;
-
-    const intersectionX = Math.max(0, Math.min(x1 + w1, x2 + w2) - Math.max(x1, x2));
-    const intersectionY = Math.max(0, Math.min(y1 + h1, y2 + h2) - Math.max(y1, y2));
-    const intersectionArea = intersectionX * intersectionY;
-
-    const unionArea = box1Area + box2Area - intersectionArea;
-
-    return unionArea === 0 ? 0 : intersectionArea / unionArea;
-  };
+  }, []);
 
   const detectObjects = useCallback(async () => {
     if (!model || !videoRef.current || !canvasRef.current) return;

@@ -21,7 +21,8 @@ tf.ready().then(() => {
 
 function App() {
   const [activeTab, setActiveTab] = useState('webcam');
-  const [_, setDetections] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const [detections, setDetections] = useState([]);
   const [model, setModel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState('coco-ssd');
