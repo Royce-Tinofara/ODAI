@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" rx="24" fill="#667eea"/>
-  <circle cx="96" cy="80" r="30" fill="white"/>
-  <rect x="56" y="120" width="80" height="40" rx="8" fill="white"/>
-  <circle cx="96" cy="80" r="15" fill="#667eea"/>
-  <rect x="86" y="130" width="20" height="20" rx="4" fill="#667eea"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="64" fill="#667eea"/>
+  <rect x="40" y="40" width="432" height="432" rx="48" fill="url(#gradient)"/>
+  <text x="256" y="280" font-family="Arial, sans-serif" font-size="140" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">OD-AI</text>
+  <text x="256" y="380" font-family="Arial, sans-serif" font-size="48" fill="rgba(255,255,255,0.7)" text-anchor="middle">Object Detection</text>
+  <defs>
+    <linearGradient id="gradient" x1="40" y1="40" x2="472" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+  </defs>
 </svg>

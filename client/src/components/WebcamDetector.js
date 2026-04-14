@@ -4,62 +4,19 @@ import './WebcamDetector.css';
 const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, modelType = 'coco-ssd' }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const [isRunning, setIsRunning] = useState(false);
+const [isRunning, setIsRunning] = useState(false);
   const [detectionData, setDetectionData] = useState([]);
   const [fps, setFps] = useState(0);
   const [inferenceTime, setInferenceTime] = useState(0);
-  const [facingMode, setFacingMode] = useState('environment'); // 'environment' = back camera, 'user' = front camera
+  const [facingMode, setFacingMode] = useState('environment');
   const animationIdRef = useRef(null);
   const lastDetectionTime = useRef(0);
   const frameInterval = 1000 / 10; // 10 FPS for better performance
   const frameCountRef = useRef(0);
   const fpsStartTimeRef = useRef(Date.now());
 
-  useEffect(() => {
-    const startWebcam = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            width: { ideal: 1280 }, 
-            height: { ideal: 720 },
-            facingMode: facingMode
-          },
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.error('Error accessing webcam:', error);
-        
-        // Detect if running on mobile
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isHTTP = window.location.protocol === 'http:';
-        
-        if (isMobile && isHTTP) {
-          alert('📱 Mobile Camera Issue:\n\nMobile browsers require HTTPS for camera access.\n\nSolutions:\n1. Use localhost on your phone (if on same WiFi)\n2. Use ngrok to create HTTPS tunnel\n3. Use from desktop/laptop\n\nError: ' + error.message);
-        } else if (error.name === 'NotAllowedError') {
-          alert('❌ Camera Access Denied\n\nPlease enable camera permissions in your browser settings.');
-        } else if (error.name === 'NotFoundError' || error.name === 'NotReadableError') {
-          alert('⚠️ No Camera Found\n\nPlease ensure your device has a working camera.\n\nError: ' + error.message);
-        } else {
-          alert('Unable to access webcam.\n\nError: ' + error.message);
-        }
-      }
-    };
-
-    startWebcam();
-
-    return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      const video = videoRef.current;
-      if (video && video.srcObject) {
-        video.srcObject.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [facingMode]);
-
   // Non-maximum suppression to reduce overlapping detections
-  const nonMaxSuppression = (predictions, iouThreshold = 0.5) => {
+  const nonMaxSuppression = useCallback((predictions, iouThreshold = 0.5) => {
     if (!predictions || predictions.length === 0) return [];
 
     // Sort by confidence score (highest first)
@@ -83,7 +40,7 @@ const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, model
   };
 
   // Calculate Intersection over Union (IoU) for two bounding boxes
-  const calculateIoU = (box1, box2) => {
+  const calculateIoU = useCallback((box1, box2) => {
     const [x1, y1, w1, h1] = box1;
     const [x2, y2, w2, h2] = box2;
 
@@ -158,7 +115,6 @@ const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, model
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
       predictions.forEach((prediction, index) => {
-        const score = prediction.score.toFixed(2);
         const confidencePercent = Math.round(prediction.score * 100);
 
         // Different colors based on confidence
@@ -211,7 +167,7 @@ const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, model
     if (isRunning) {
       animationIdRef.current = requestAnimationFrame(detectObjects);
     }
-  }, [model, isRunning, setDetections, confidenceThreshold, modelType]);
+  }, [model, isRunning, setDetections, confidenceThreshold, modelType, frameInterval, nonMaxSuppression, calculateIoU]);
 
   useEffect(() => {
     if (isRunning && model) {

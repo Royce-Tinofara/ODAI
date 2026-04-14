@@ -62,7 +62,6 @@ const ImageUploader = ({ model, setDetections, confidenceThreshold = 0.5, modelT
       ctx.drawImage(img, 0, 0);
 
       predictions.forEach((prediction, index) => {
-        const score = prediction.score.toFixed(2);
         const confidencePercent = Math.round(prediction.score * 100);
 
         // Different colors based on confidence

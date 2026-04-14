@@ -21,7 +21,7 @@ tf.ready().then(() => {
 
 function App() {
   const [activeTab, setActiveTab] = useState('webcam');
-  const [detections, setDetections] = useState([]);
+  const [_, setDetections] = useState([]);
   const [model, setModel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedModel, setSelectedModel] = useState('coco-ssd');
