@@ -8,6 +8,7 @@ const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, model
   const [detectionData, setDetectionData] = useState([]);
   const [fps, setFps] = useState(0);
   const [inferenceTime, setInferenceTime] = useState(0);
+  const [facingMode, setFacingMode] = useState('environment'); // 'environment' = back camera, 'user' = front camera
   const animationIdRef = useRef(null);
   const lastDetectionTime = useRef(0);
   const frameInterval = 1000 / 10; // 10 FPS for better performance
@@ -18,7 +19,11 @@ const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, model
     const startWebcam = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+          video: { 
+            width: { ideal: 1280 }, 
+            height: { ideal: 720 },
+            facingMode: facingMode
+          },
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -51,7 +56,7 @@ const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, model
         video.srcObject.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [facingMode]);
 
   // Non-maximum suppression to reduce overlapping detections
   const nonMaxSuppression = (predictions, iouThreshold = 0.5) => {
@@ -270,6 +275,13 @@ const WebcamDetector = ({ model, setDetections, confidenceThreshold = 0.5, model
           onClick={toggleDetection}
         >
           {isRunning ? '⏹️ Stop Detection' : '▶️ Start Detection'}
+        </button>
+        <button
+          className="btn btn-secondary"
+          onClick={() => setFacingMode(prev => prev === 'environment' ? 'user' : 'environment')}
+          title="Switch Camera"
+        >
+          🔄 Switch Camera
         </button>
       </div>
 
