@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import axios from 'axios';
 import './ImageUploader.css';
 
-const ImageUploader = ({ model, setDetections }) => {
+const ImageUploader = ({ model, setDetections, confidenceThreshold = 0.5, modelType = 'coco-ssd' }) => {
   const fileInputRef = useRef(null);
   const canvasRef = useRef(null);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -30,7 +30,26 @@ const ImageUploader = ({ model, setDetections }) => {
 
     setLoading(true);
     try {
-      const predictions = await model.detect(img);
+      let predictions = [];
+
+      if (modelType === 'coco-ssd') {
+        predictions = await model.detect(img);
+        // Filter by confidence threshold
+        predictions = predictions.filter(pred => pred.score >= confidenceThreshold);
+      } else if (modelType === 'mobilenet') {
+        // MobileNet uses classify method for image classification
+        const results = await model.classify(img);
+        // Convert classification results to detection format
+        predictions = results
+          .filter(result => result.probability >= confidenceThreshold)
+          .slice(0, 5) // Top 5 results
+          .map((result, index) => ({
+            class: result.className,
+            score: result.probability,
+            bbox: [10 + index * 100, 10 + index * 50, 80, 40] // Dummy bbox for classification
+          }));
+      }
+
       setDetectionData(predictions);
       setDetections(predictions);
 
@@ -42,25 +61,52 @@ const ImageUploader = ({ model, setDetections }) => {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
 
-      predictions.forEach((prediction) => {
-        const [x, y, width, height] = prediction.bbox;
+      predictions.forEach((prediction, index) => {
         const score = prediction.score.toFixed(2);
+        const confidencePercent = Math.round(prediction.score * 100);
 
-        // Draw bounding box
-        ctx.strokeStyle = '#00ff00';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, width, height);
+        // Different colors based on confidence
+        const getColor = (score) => {
+          if (score >= 0.8) return '#00ff00'; // Green for high confidence
+          if (score >= 0.6) return '#ffff00'; // Yellow for medium confidence
+          return '#ff6b6b'; // Red for low confidence
+        };
 
-        // Draw label background
-        ctx.fillStyle = '#00ff00';
-        const labelText = `${prediction.class} (${score})`;
-        const textMetrics = ctx.measureText(labelText);
-        ctx.fillRect(x, y - 25, textMetrics.width + 10, 20);
+        const color = getColor(prediction.score);
 
-        // Draw label text
-        ctx.fillStyle = '#000';
-        ctx.font = '16px Arial';
-        ctx.fillText(labelText, x + 5, y - 8);
+        if (prediction.bbox && modelType === 'coco-ssd') {
+          // Draw bounding box for COCO-SSD
+          const [x, y, width, height] = prediction.bbox;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x, y, width, height);
+
+          // Draw label background
+          ctx.fillStyle = color;
+          const labelText = `${prediction.class} ${confidencePercent}%`;
+          const textMetrics = ctx.measureText(labelText);
+          ctx.fillRect(x, y - 30, textMetrics.width + 10, 25);
+
+          // Draw label text
+          ctx.fillStyle = '#000';
+          ctx.font = 'bold 14px Arial';
+          ctx.fillText(labelText, x + 5, y - 10);
+        } else {
+          // For MobileNet or other models without bbox, show classification results
+          const x = 20;
+          const y = 50 + index * 40;
+
+          // Draw background for classification result
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+          const labelText = `${prediction.class} ${confidencePercent}%`;
+          const textMetrics = ctx.measureText(labelText);
+          ctx.fillRect(x - 5, y - 20, textMetrics.width + 10, 25);
+
+          // Draw label text
+          ctx.fillStyle = color;
+          ctx.font = 'bold 16px Arial';
+          ctx.fillText(labelText, x, y);
+        }
       });
 
       // Send to backend
